@@ -29,7 +29,7 @@ Satu repo, dengan aturan supaya tiap `apps/*` bisa dipindah ke repo sendiri tanp
   commit ikut terbawa.
 - `api/openapi.yaml` ikut ke repo API. App lain mengambilnya dari sana: versi rilis, atau di-copy
   saat menjalankan `make gen`.
-- Job CI di `.gitlab-ci.yml` sudah dipisah per app, tinggal dipindah.
+- Workflow CI di `.github/workflows/` sudah satu file per app (`api.yml`, `mobile.yml`), tinggal dipindah.
 
 ## Konsekuensi
 

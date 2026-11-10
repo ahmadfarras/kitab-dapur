@@ -1,0 +1,29 @@
+# Runs only for apps/mobile, so this file moves with the app when the repo is split.
+name: mobile
+
+on:
+  push:
+    branches: [main]
+    paths: [apps/mobile/**, .github/workflows/mobile.yml]
+  pull_request:
+    paths: [apps/mobile/**, .github/workflows/mobile.yml]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/mobile
+    steps:
+      - uses: actions/checkout@v7
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.47.9
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: make lint
+      - run: make test

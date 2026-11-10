@@ -1,0 +1,41 @@
+# Runs only for apps/api and its contract, so this file moves with the api when the repo is split.
+name: api
+
+on:
+  push:
+    branches: [main]
+    paths: [apps/api/**, api/openapi.yaml, .github/workflows/api.yml]
+  pull_request:
+    paths: [apps/api/**, api/openapi.yaml, .github/workflows/api.yml]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/api
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: ci
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U ci -d ci"
+          --health-interval 2s
+          --health-retries 30
+    env:
+      TEST_DATABASE_URL: postgres://ci:ci@localhost:5432/ci?sslmode=disable
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: apps/api/go.mod
+          cache-dependency-path: apps/api/go.sum
+      - run: make lint
+      - run: make test
