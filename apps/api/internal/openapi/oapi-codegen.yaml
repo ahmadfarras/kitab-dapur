@@ -1,0 +1,7 @@
+# Contract lives at the repo root; when the api is split out, only this path changes.
+package: openapi
+output: api.gen.go
+generate:
+  models: true
+  std-http-server: true
+  strict-server: true

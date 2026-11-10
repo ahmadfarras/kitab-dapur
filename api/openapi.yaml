@@ -1,0 +1,168 @@
+openapi: 3.0.3
+info:
+  title: Kitab Dapur API
+  version: 0.1.0
+  description: Menyimpan resep keluarga. Satu kitab = koleksi resep milik satu keluarga.
+servers:
+  - url: http://localhost:8080
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      responses:
+        "200":
+          description: Server dan database siap.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Health" }
+        "503":
+          description: Database tidak bisa dihubungi.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+  /kitabs:
+    post:
+      operationId: createKitab
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/NewKitab" }
+      responses:
+        "201":
+          description: Kitab dibuat.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Kitab" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+  /kitabs/{kitabId}/recipes:
+    parameters:
+      - $ref: "#/components/parameters/KitabId"
+    post:
+      operationId: createRecipe
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/NewRecipe" }
+      responses:
+        "201":
+          description: Resep disimpan.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Recipe" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    get:
+      operationId: listRecipes
+      parameters:
+        - name: limit
+          in: query
+          description: Jumlah resep, terbaru dulu. Dibatasi 1 sampai 100.
+          schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
+      responses:
+        "200":
+          description: Resep di kitab ini, terbaru dulu.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RecipeList" }
+  /kitabs/{kitabId}/recipes/{recipeId}:
+    parameters:
+      - $ref: "#/components/parameters/KitabId"
+      - name: recipeId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      operationId: getRecipe
+      responses:
+        "200":
+          description: Resep.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Recipe" }
+        "404": { $ref: "#/components/responses/NotFound" }
+components:
+  parameters:
+    KitabId:
+      name: kitabId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+  responses:
+    BadRequest:
+      description: Input tidak valid.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    NotFound:
+      description: Tidak ditemukan.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+  schemas:
+    Health:
+      type: object
+      required: [status]
+      properties:
+        status: { type: string, example: ok }
+    Error:
+      type: object
+      required: [message]
+      properties:
+        message: { type: string }
+        field:
+          type: string
+          description: Field yang salah, bila kesalahan ada pada satu field.
+    NewKitab:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, maxLength: 80, example: Keluarga Syafrin }
+    Kitab:
+      type: object
+      required: [id, name, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        createdAt: { type: string, format: date-time }
+    NewRecipe:
+      type: object
+      required: [title, author, ingredients, steps]
+      properties:
+        title: { type: string, maxLength: 120, example: Rendang Padang }
+        author:
+          type: string
+          maxLength: 60
+          description: Resep ini dari siapa.
+          example: Ibu
+        ingredients:
+          type: array
+          maxItems: 100
+          items: { type: string, maxLength: 500 }
+        steps:
+          type: array
+          maxItems: 100
+          items: { type: string, maxLength: 500 }
+    Recipe:
+      type: object
+      required: [id, kitabId, title, author, ingredients, steps, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        kitabId: { type: string, format: uuid }
+        title: { type: string }
+        author: { type: string }
+        ingredients:
+          type: array
+          items: { type: string }
+        steps:
+          type: array
+          items: { type: string }
+        createdAt: { type: string, format: date-time }
+    RecipeList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Recipe" }

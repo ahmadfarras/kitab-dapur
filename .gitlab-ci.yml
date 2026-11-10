@@ -1,0 +1,32 @@
+# One job per app, each triggered only by its own files, so a job moves with its app when the repo is split.
+stages: [test]
+
+api:
+  stage: test
+  image: golang:1.25
+  services:
+    - name: postgres:18-alpine
+      alias: postgres
+  variables:
+    POSTGRES_USER: ci
+    POSTGRES_PASSWORD: ci
+    POSTGRES_DB: ci
+    TEST_DATABASE_URL: postgres://ci:ci@postgres:5432/ci?sslmode=disable
+  rules:
+    - changes: [apps/api/**/*, api/openapi.yaml]
+  script:
+    - cd apps/api
+    - make lint
+    - make test
+
+mobile:
+  stage: test
+  # shortcut: tracks the latest stable Flutter, pin a version tag once releases matter
+  image: ghcr.io/cirruslabs/flutter:stable
+  rules:
+    - changes: [apps/mobile/**/*]
+  script:
+    - cd apps/mobile
+    - flutter pub get
+    - make lint
+    - make test
